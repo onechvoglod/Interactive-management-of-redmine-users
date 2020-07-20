@@ -13,7 +13,7 @@ const RedmineState = ({ children }) => {
   const [state, dispatch] = useReducer(RedmineReducer, initialState);
 
   const getUsers = () => {
-    fetch(`https://redmine.lineup.com.ua/users.json?key=${adminKey}&limit=100`)
+    fetch(`https://redmine.lineup.com.ua/users.json?key=${adminKey}&limit=50`)
       .then((response) => response.json())
       .then((data) => dispatch({ type: GET_USERS, payload: data.users }));
   };

@@ -6,100 +6,24 @@ import { useContext } from "react";
 import { RedmineContext } from "../context/redmine/redmineContext";
 
 const ingURL =
-  "https://lh3.googleusercontent.com/proxy/FO0H1tQvc1NH-aWJj5MWVDqyLjqvopcbLVyte2rVhpCG5jZHgQagFyn2DTwdnkI5voI0Aox7BZwrY5qcpaCM4G3JIu37q7-ZZRLQOI8ieHp74VM-t6ai_HVQTb8";
+  "https://pm1.narvii.com/6889/74979d4d2744ec6e27995b6e866f091d04c0b40cr1-515-414v2_uhq.jpg";
 
-const nodeDataArra = [
-  {
-    key: 0,
-    text: "Алексей Безпаленко",
-    color: "orange",
-    // loc: "0 0",
-    source: ingURL,
-  },
-  {
-    key: 1,
-    text: "Александр Чиняков",
-    color: "orange",
-    // loc: "150 0",
-    source: ingURL,
-    parent: 0,
-  },
-  {
-    key: 2,
-    text: "Alexander Perel",
-    color: "lightgreen",
-    // loc: "0 150",
-    source: ingURL,
-    parent: 0,
-  },
-  {
-    key: 3,
-    text: "Анастасия Беседина",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 1,
-  },
-  {
-    key: 3,
-    text: "Алла Мец",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 1,
-  },
-  {
-    key: 3,
-    text: "Александр присяжный",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 2,
-  },
-  {
-    key: 3,
-    text: "Алексей Битюков",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 2,
-  },
-  {
-    key: 3,
-    text: "Алексей Гладковский",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 3,
-  },
-  {
-    key: 3,
-    text: "Алина Петровская",
-    color: "pink",
-    // loc: "150 150",
-    source: ingURL,
-    parent: 3,
-  },
-];
+let nodeDataArra = [];
 
+let myDiagram;
 function initDiagram() {
   const $ = go.GraphObject.make;
   // set your license key here before creating the diagram: go.Diagram.licenseKey = "...";
-  const myDiagram = $(go.Diagram, {
+  myDiagram = $(go.Diagram, {
     maxSelectionCount: 100, //количество одновременно выбранных элементов
     validCycle: go.Diagram.CycleDestinationTree, // в узел может входить любое количество исходных ссылок, но не более одной целевой ссылки может выходить из узла
 
-    // "clickCreatingTool.archetypeNodeData": {
-
-    // },
     "undoManager.isEnabled": true, // must be set to allow for model change listening
     // 'undoManager.maxHistoryLength': 0,  // uncomment disable undo/redo functionality
     // двойным щелчком создать новый узел
     "clickCreatingTool.archetypeNodeData": {
-      // двойным щелчком создать новый узел
-      text: "new node",
-      color: "lightblue",
-      //   name: "(new person)",
+      // color: "lightblue",
+      name: "(new person)",
       //   title: "",
       //   comments: "",
     },
@@ -126,11 +50,41 @@ function initDiagram() {
       alternateAlignment: go.TreeLayout.AlignmentBus, // относительная позиция родительского узла с его дочерними элементами
       alternateNodeSpacing: 20, // расстояние между узлами внутри слоя - между братьями и сестрами.
     }),
-
-    // model: $(go.GraphLinksModel, {
-    //   linkKeyProperty: "key", // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel ??
-    // }),
   });
+
+  myDiagram.addDiagramListener("Modified", function (e) {
+    var button = document.getElementById("SaveButton");
+    if (button) button.disabled = !myDiagram.isModified;
+    var idx = document.title.indexOf("*");
+    if (myDiagram.isModified) {
+      if (idx < 0) document.title += "*";
+    } else {
+      if (idx >= 0) document.title = document.title.substr(0, idx);
+    }
+  });
+
+  myDiagram.addDiagramListener("SelectionDeleting", function (e) {
+    var part = e.subject.first(); // e.subject is the myDiagram.selection collection,
+    // so we'll get the first since we know we only have one selection
+    myDiagram.startTransaction("clear boss");
+    if (part instanceof go.Node) {
+      var it = part.findTreeChildrenNodes(); // find all child nodes
+      while (it.next()) {
+        // now iterate through them and clear out the boss information
+        const child = it.value;
+        const bossText = child.findObject("boss"); // since the boss TextBlock is named, we can access it by name
+        if (bossText === null) return;
+        bossText.text = "";
+      }
+    } else if (part instanceof go.Link) {
+      const child = part.toNode;
+      const bossText = child.findObject("boss"); // since the boss TextBlock is named, we can access it by name
+      if (bossText === null) return;
+      bossText.text = "";
+    }
+    myDiagram.commitTransaction("clear boss");
+  });
+
   var model = $(go.TreeModel);
   model.nodeDataArray = nodeDataArra;
   myDiagram.model = model;
@@ -141,91 +95,152 @@ function initDiagram() {
     { corner: 5, relinkableFrom: true, relinkableTo: true },
     $(go.Shape, { strokeWidth: 2, stroke: "black" })
   );
-  //   var levelColors = [
-  //     "#AC193D",
-  //     "#2672EC",
-  //     "#8C0095",
-  //     "#5133AB",
-  //     "#008299",
-  //     "#D24726",
-  //     "#008A00",
-  //     "#094AB2",
-  //   ];
 
-  // override TreeLayout.commitNodes to also modify the background brush based on the tree depth level
-  //   myDiagram.layout.commitNodes = function () {
-  //     go.TreeLayout.prototype.commitNodes.call(myDiagram.layout); // do the standard behavior
-  //     // then go through all of the vertexes and set their corresponding node's Shape.fill
-  //     // to a brush dependent on the TreeVertex.level value
-  //     myDiagram.layout.network.vertexes.each(function (v) {
-  //       if (v.node) {
-  //         var level = v.level % levelColors.length;
-  //         var color = levelColors[level];
-  //         var shape = v.node.findObject("SHAPE");
-  //         if (shape)
-  //           shape.stroke = $(go.Brush, "Linear", {
-  //             0: color,
-  //             1: go.Brush.lightenBy(color, 0.05),
-  //             start: go.Spot.Left,
-  //             end: go.Spot.Right,
-  //           });
-  //       }
-  //     });
-  //   };
+  // Setup zoom to fit button
+  document.getElementById("zoomToFit").addEventListener("click", function () {
+    myDiagram.commandHandler.zoomToFit();
+  });
 
-  //   function textStyle() {
-  //     return { font: "9pt  Segoe UI,sans-serif", stroke: "white" };
-  //   }
-  //   function nodeDoubleClick(e, obj) {
-  //     var clicked = obj.part;
-  //     if (clicked !== null) {
-  //       //   var thisemp = clicked.data;
-  //       myDiagram.startTransaction("add employee");
-  //       var newemp = {
-  //         text: "new node",
-  //         color: "lightblue",
-  //         // name: "(new person)",
-  //         // title: "",
-  //         // comments: "",
-  //         // parent: thisemp.key,
-  //       };
-  //       myDiagram.model.addNodeData(newemp);
-  //       myDiagram.commitTransaction("add employee");
-  //     }
-  //   }
+  document.getElementById("centerRoot").addEventListener("click", function () {
+    myDiagram.scale = 1;
+    myDiagram.commandHandler.scrollToPart(myDiagram.findNodeForKey(1));
+  });
+
+  const levelColors = [
+    "#AC193D",
+    "#2672EC",
+    "#8C0095",
+    "#5133AB",
+    "#008299",
+    "#D24726",
+    "#008A00",
+    "#094AB2",
+  ];
+
+  myDiagram.layout.commitNodes = function () {
+    go.TreeLayout.prototype.commitNodes.call(myDiagram.layout); // do the standard behavior
+    // then go through all of the vertexes and set their corresponding node's Shape.fill
+    // to a brush dependent on the TreeVertex.level value
+    myDiagram.layout.network.vertexes.each(function (v) {
+      if (v.node) {
+        var level = v.level % levelColors.length;
+        var color = levelColors[level];
+        var shape = v.node.findObject("SHAPE");
+        if (shape)
+          shape.stroke = $(go.Brush, "Linear", {
+            0: color,
+            1: go.Brush.lightenBy(color, 0.05),
+            start: go.Spot.Left,
+            end: go.Spot.Right,
+          });
+      }
+    });
+  };
+
+  function nodeDoubleClick(e, obj) {
+    var clicked = obj.part;
+    if (clicked !== null) {
+      var thisemp = clicked.data;
+      myDiagram.startTransaction("add employee");
+      var newemp = {
+        name: "(new person)",
+        title: "",
+        comments: "",
+        parent: thisemp.key,
+      };
+      myDiagram.model.addNodeData(newemp);
+      myDiagram.commitTransaction("add employee");
+    }
+  }
+
+  function mayWorkFor(node1, node2) {
+    if (!(node1 instanceof go.Node)) return false; // must be a Node
+    if (node1 === node2) return false; // cannot work for yourself
+    if (node2.isInTreeOf(node1)) return false; // cannot work for someone who works for you
+    return true;
+  }
+
+  function textStyle() {
+    return { font: "9pt  Segoe UI,sans-serif", stroke: "white" };
+  }
 
   // define a simple Node template
   myDiagram.nodeTemplate = $(
     go.Node,
     "Auto",
     // new go.Binding("text", "text"),
-    // { doubleClick: nodeDoubleClick }, // the Shape will go around the TextBlock
+    { doubleClick: nodeDoubleClick }, // the Shape will go around the TextBlock
+    {
+      mouseDragEnter: function (e, node, prev) {
+        var diagram = node.diagram;
+        var selnode = diagram.selection.first();
+        if (!mayWorkFor(selnode, node)) return;
+        var shape = node.findObject("SHAPE");
+        if (shape) {
+          shape._prevFill = shape.fill; // remember the original brush
+          shape.fill = "darkred";
+        }
+      },
+      mouseDragLeave: function (e, node, next) {
+        var shape = node.findObject("SHAPE");
+        if (shape && shape._prevFill) {
+          shape.fill = shape._prevFill; // restore the original brush
+        }
+      },
+      mouseDrop: function (e, node) {
+        var diagram = node.diagram;
+        var selnode = diagram.selection.first(); // assume just one Node in selection
+        if (mayWorkFor(selnode, node)) {
+          // find any existing link into the selected node
+          var link = selnode.findTreeParentLink();
+          if (link !== null) {
+            // reconnect any existing link
+            link.fromNode = node;
+          } else {
+            // else create a new link
+            diagram.toolManager.linkingTool.insertLink(
+              node,
+              node.port,
+              selnode,
+              selnode.port
+            );
+          }
+        }
+      },
+    },
+    // for sorting, have the Node.text be the data.name
+    new go.Binding("text", "name"),
+    // bind the Part.layerName to control the Node's layer depending on whether it isSelected
+    new go.Binding("layerName", "isSelected", function (sel) {
+      return sel ? "Foreground" : "";
+    }).ofObject(),
+    // define the node's outer shape
+
     // new go.Binding("location", "loc", go.Point.parse).makeTwoWay(
     //   go.Point.stringify
     // ),
-    $(
-      go.Shape,
-      "Rectangle",
-      {
-        name: "SHAPE",
-        fill: "white",
-        stroke: "purple",
-        strokeWidth: 3.5,
-        portId: "",
-        fromLinkable: true,
-        toLinkable: true,
-        cursor: "pointer",
-      },
-      // Shape.fill is bound to Node.data.color
-      new go.Binding("fill", "color")
-    ),
+    $(go.Shape, "Rectangle", {
+      name: "SHAPE",
+      fill: "#333333",
+      stroke: "white",
+      strokeWidth: 3.5,
+      portId: "",
+      fromLinkable: true,
+      toLinkable: true,
+      cursor: "pointer",
+    }),
 
     $(
       go.Panel,
       "Horizontal",
       $(
         go.Picture,
-        { margin: 10, width: 50, height: 50, background: "red" },
+        // { margin: 10, width: 50, height: 50, background: "red" },
+        {
+          name: "Picture",
+          desiredSize: new go.Size(70, 70),
+          margin: 1.5,
+        },
         new go.Binding("source")
       ),
 
@@ -233,7 +248,7 @@ function initDiagram() {
         go.Panel,
         "Table",
         {
-          minSize: new go.Size(150, NaN),
+          minSize: new go.Size(170, NaN),
           // maxSize: new go.Size(150, NaN),
           margin: new go.Margin(6, 10, 0, 6),
           defaultAlignment: go.Spot.Left,
@@ -241,8 +256,8 @@ function initDiagram() {
         $(go.RowColumnDefinition, { column: 2, width: 4 }),
         $(
           go.TextBlock,
-          "stretch: Horizontal",
-          // textStyle(), // the name
+          textStyle(),
+          // "stretch: Horizontal",
           {
             row: 0,
             column: 0,
@@ -253,19 +268,18 @@ function initDiagram() {
             isMultiline: false,
             minSize: new go.Size(10, 16),
           },
-          new go.Binding("text", "text").makeTwoWay()
+          new go.Binding("text", "name").makeTwoWay()
         ),
-        // $(go.TextBlock, "id: ", { row: 1, column: 0 }),
+
         $(
           go.TextBlock,
+          textStyle(),
           {
             row: 1,
             column: 0,
-            // columnSpan: 4,
+
             editable: true,
             isMultiline: false,
-            // minSize: new go.Size(10, 14),
-            // margin: new go.Margin(0, 0, 0, 3),
           },
           new go.Binding("text", "key", function (v) {
             return "ID: " + v;
@@ -273,53 +287,75 @@ function initDiagram() {
         ),
         $(
           go.TextBlock,
-          // textStyle(),
+          textStyle(),
           { name: "boss", row: 2, column: 0 }, // we include a name so we can access this TextBlock when deleting Nodes/Links
           new go.Binding("text", "parent", function (v) {
-            return "Boss: " + v;
+            return "Boss " + v;
           })
         )
       )
-
-      // $(
-      //   go.TextBlock,
-      //   "Default Text",
-      //   { margin: 12, stroke: "white", font: "bold 16px sans-serif" },
-      //   new go.Binding("text", "text")
-      // )
     )
-
-    // $(
-    //   go.TextBlock,
-    //   { margin: 8, editable: true }, // some room around the text
-    //   new go.Binding("text").makeTwoWay()
-    // )
   );
 
   return myDiagram;
 }
-
+function save() {
+  const newNodeDataArra = myDiagram.model.toJson();
+  myDiagram.isModified = false;
+  console.log(newNodeDataArra);
+}
 function handleModelChange(changes) {
-  console.log("GoJS model changed!");
+  console.log(nodeDataArra);
 }
 
 const Diagrama = () => {
   const { users } = useContext(RedmineContext);
 
-  console.log(users);
+  nodeDataArra = users.map((user, index) => {
+    let parentId;
+    if (index === 0) {
+      parentId = "";
+    } else if (index === 1 || index === 2 || index === 7) {
+      parentId = 0;
+    } else if (index === 3 || index === 4) {
+      parentId = 1;
+    } else if (index === 5 || index === 6) {
+      parentId = 8;
+    } else if (index === 8 || index === 9) {
+      parentId = 7;
+    }
+    return {
+      key: index,
+      name: `${user.firstname} ${user.lastname}`,
+      color: "orange",
+      source: ingURL,
+      parent: parentId,
+      id: user.id,
+    };
+  });
+
   return (
-    <ReactDiagram
-      initDiagram={initDiagram}
-      divClassName={classes["diagram-component"]}
-      nodeDataArray={nodeDataArra}
-      // linkDataArray={[
-      //   { key: -1, from: 0, to: 1 },
-      //   { key: -2, from: 0, to: 2 },
-      //   { key: -3, from: 0, to: 3 },
-      //   { key: -4, from: 0, to: 4 },
-      // ]}
-      onModelChange={handleModelChange}
-    />
+    <React.Fragment>
+      <ReactDiagram
+        initDiagram={initDiagram}
+        divClassName={classes["diagram-component"]}
+        nodeDataArray={nodeDataArra}
+        onModelChange={handleModelChange}
+      />
+      <p>
+        <button id="zoomToFit">Zoom to Fit</button>
+        <button id="centerRoot">Center on root</button>
+      </p>
+      <div>
+        <button className="btn btn-primary mt-2" id="SaveButton" onClick={save}>
+          Save
+        </button>
+      </div>
+
+      {/* <button className="btn btn-danger mt-2" onClick="load()">
+        Load
+      </button> */}
+    </React.Fragment>
   );
 };
 
