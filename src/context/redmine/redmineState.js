@@ -2,6 +2,10 @@ import React, { useReducer } from "react";
 import { RedmineReducer } from "./redmineReducer";
 import { RedmineContext } from "./redmineContext";
 import { GET_USERS } from "../type";
+import axios from "axios";
+
+const ADMIN_KEY = process.env.REACT_APP_ADMIN_KEY;
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const RedmineState = ({ children }) => {
   const initialState = {
@@ -9,13 +13,17 @@ const RedmineState = ({ children }) => {
     loading: true,
   };
 
-  const adminKey = `c87667a752ee525799da4662f9d00a1297514fbb`;
   const [state, dispatch] = useReducer(RedmineReducer, initialState);
 
-  const getUsers = () => {
-    fetch(`https://redmine.lineup.com.ua/users.json?key=${adminKey}&limit=50`)
-      .then((response) => response.json())
-      .then((data) => dispatch({ type: GET_USERS, payload: data.users }));
+  const getUsers = async () => {
+    const response = await axios.get(
+      `${BASE_URL}/users.json?key=${ADMIN_KEY}&limit=50`
+    );
+    dispatch({ type: GET_USERS, payload: response.data.users });
+
+    // fetch(`${BASE_URL}/users.json?key=${ADMIN_KEY}&limit=50`)
+    //   .then((response) => response.json())
+    //   .then((data) => dispatch({ type: GET_USERS, payload: data.users }));
   };
 
   const { users, loading } = state;
