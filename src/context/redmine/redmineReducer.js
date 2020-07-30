@@ -1,4 +1,4 @@
-import { GET_USERS } from "../type";
+import { GET_USERS, CHANGE_USERS } from "../type";
 
 // export const RedmineReducer = (state, action) => {
 //   switch (action.type) {
@@ -11,6 +11,11 @@ import { GET_USERS } from "../type";
 
 const handlers = {
   [GET_USERS]: (state, { payload }) => ({
+    ...state,
+    users: payload,
+    loading: false,
+  }),
+  [CHANGE_USERS]: (state, { payload }) => ({
     ...state,
     users: payload,
     loading: false,

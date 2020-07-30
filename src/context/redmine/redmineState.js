@@ -1,7 +1,7 @@
 import React, { useReducer } from "react";
 import { RedmineReducer } from "./redmineReducer";
 import { RedmineContext } from "./redmineContext";
-import { GET_USERS } from "../type";
+import { GET_USERS, CHANGE_USERS } from "../type";
 import axios from "axios";
 
 const ADMIN_KEY = process.env.REACT_APP_ADMIN_KEY;
@@ -26,10 +26,14 @@ const RedmineState = ({ children }) => {
     //   .then((data) => dispatch({ type: GET_USERS, payload: data.users }));
   };
 
+  const changeUsers = (data) => {
+    dispatch({ type: CHANGE_USERS, payload: data.nodeDataArray });
+  };
+
   const { users, loading } = state;
 
   return (
-    <RedmineContext.Provider value={{ users, loading, getUsers }}>
+    <RedmineContext.Provider value={{ users, loading, getUsers, changeUsers }}>
       {children}
     </RedmineContext.Provider>
   );

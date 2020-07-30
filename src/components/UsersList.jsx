@@ -4,11 +4,12 @@ import classes from "./UsersList.module.scss";
 
 const UsersList = () => {
   const { users, loading, getUsers } = useContext(RedmineContext);
-  console.log(users);
+
+  const cls = ["list-group-item", "list-group-item-action"];
 
   useEffect(() => {
     getUsers();
-    //eslint-disable-next-line
+    // eslint-disable-next-line
   }, []);
 
   if (loading) {
@@ -19,42 +20,22 @@ const UsersList = () => {
     <React.Fragment>
       <div className={`list-group ${classes["users-list"]}`}>
         {users.map((user, index) => {
+          let isParent = users.find((item) => item.parent === user.key);
+          if (!user.parent && !isParent) {
+            cls.push("bg-danger", "text-white");
+          } else {
+            cls.splice(2, 2);
+          }
+
           return (
-            <button
-              type="button"
-              className="list-group-item list-group-item-action"
-              key={index}
-            >
-              {`${user.firstname} ${user.lastname}`}
+            <button type="button" className={cls.join(" ")} key={index}>
+              {user.name ? user.name : `${user.firstname} ${user.lastname}`}
             </button>
           );
         })}
       </div>
     </React.Fragment>
   );
-
-  // return (
-  //   <div className="list-group">
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Dapibus ac facilisis in
-  //     </button>
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Morbi leo risus
-  //     </button>
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Porta ac consectetur ac
-  //     </button>
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Dapibus ac facilisis in
-  //     </button>
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Morbi leo risus
-  //     </button>
-  //     <button type="button" className="list-group-item list-group-item-action">
-  //       Porta ac consectetur ac
-  //     </button>
-  //   </div>
-  // );
 };
 
 export default UsersList;

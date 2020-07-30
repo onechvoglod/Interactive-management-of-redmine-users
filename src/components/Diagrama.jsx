@@ -9,6 +9,7 @@ const ingURL =
   "https://pm1.narvii.com/6889/74979d4d2744ec6e27995b6e866f091d04c0b40cr1-515-414v2_uhq.jpg";
 
 let nodeDataArra = [];
+let newNodeDataArray;
 
 let myDiagram;
 function initDiagram() {
@@ -299,37 +300,28 @@ function initDiagram() {
 
   return myDiagram;
 }
-function save() {
-  const newNodeDataArra = myDiagram.model.toJson();
-  myDiagram.isModified = false;
-  console.log(newNodeDataArra);
-}
+
 function handleModelChange(changes) {
   console.log(nodeDataArra);
 }
 
 const Diagrama = () => {
-  const { users } = useContext(RedmineContext);
+  const { users, changeUsers } = useContext(RedmineContext);
+
+  function save() {
+    newNodeDataArray = myDiagram.model.toJson();
+    let data = JSON.parse(newNodeDataArray);
+    changeUsers(data);
+    myDiagram.isModified = false;
+  }
 
   nodeDataArra = users.map((user, index) => {
-    let parentId;
-    if (index === 0) {
-      parentId = "";
-    } else if (index === 1 || index === 2 || index === 7) {
-      parentId = 0;
-    } else if (index === 3 || index === 4) {
-      parentId = 1;
-    } else if (index === 5 || index === 6) {
-      parentId = 8;
-    } else if (index === 8 || index === 9) {
-      parentId = 7;
-    }
     return {
-      key: index,
-      name: `${user.firstname} ${user.lastname}`,
+      key: user.key ? user.key : index,
+      name: user.name ? user.name : `${user.firstname} ${user.lastname}`,
       color: "orange",
       source: ingURL,
-      parent: parentId,
+      parent: user.parent || "0" ? user.parent : "",
       id: user.id,
     };
   });
@@ -351,10 +343,6 @@ const Diagrama = () => {
           Save
         </button>
       </div>
-
-      {/* <button className="btn btn-danger mt-2" onClick="load()">
-        Load
-      </button> */}
     </React.Fragment>
   );
 };
